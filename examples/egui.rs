@@ -4,15 +4,25 @@ use bevy_egui::{
     EguiContext, EguiPlugin,
 };
 use bevy_mod_picking::prelude::*;
+use egui_dock::{DockArea, NodeIndex, Style, Tree};
 
 fn main() {
+    let mut tree = Tree::new(vec!["tab1".to_owned(), "tab2".to_owned()]);
+
+    // You can modify the tree before constructing the dock
+    let [a, b] = tree.split_left(NodeIndex::root(), 0.3, vec!["tab3".to_owned()]);
+    let [_, _] = tree.split_below(a, 0.7, vec!["tab4".to_owned()]);
+    let [_, _] = tree.split_below(b, 0.5, vec!["tab5".to_owned()]);
+
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugins(DefaultPickingPlugins)
         .add_plugin(bevy_framepace::FramepacePlugin) // significantly reduces input lag
         .add_plugin(EguiPlugin)
         .add_system(ui_example)
+        .add_system(dock_example)
         .add_startup_system(setup)
+        .insert_resource(MyTree(tree))
         .run();
 }
 
@@ -22,6 +32,30 @@ fn ui_example(mut egui_context: ResMut<EguiContext>) {
             ui.label("world");
         });
     });
+}
+
+struct TabViewer {}
+
+impl egui_dock::TabViewer for TabViewer {
+    type Tab = String;
+
+    fn ui(&mut self, ui: &mut egui::Ui, tab: &mut Self::Tab) {
+        ui.label(format!("Content of {tab}"));
+    }
+
+    fn title(&mut self, tab: &mut Self::Tab) -> egui::WidgetText {
+        (&*tab).into()
+    }
+}
+
+#[derive(Resource)]
+struct MyTree(Tree<String>);
+
+fn dock_example(mut egui_context: ResMut<EguiContext>, mut tree: ResMut<MyTree>) {
+    let ctx = egui_context.ctx_mut();
+    DockArea::new(&mut tree.0)
+        .style(Style::from_egui(ctx.style().as_ref()))
+        .show(&ctx, &mut TabViewer {});
 }
 
 /// set up a simple 3D scene

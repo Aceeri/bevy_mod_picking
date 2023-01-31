@@ -43,6 +43,7 @@ bevy = { version = "0.9", default-features = false, features = [
 ] }
 bevy_framepace = { version = "0.10", default-features = false }
 bevy_mod_picking = { path = "", features = ["all"] }
+egui_dock = { path = "../egui_dock" }
 
 [features]
 all = [
